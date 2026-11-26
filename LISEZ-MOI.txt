@@ -1,0 +1,25 @@
+ROSALIE — prototype consolidé 0.2
+
+Cette version rassemble davantage de fonctions dans un seul projet installable (PWA).
+
+Inclus :
+- Accueil et navigation bordeaux / nude / crème.
+- Cahiers avec plusieurs pages, titre modifiable, suppression, sauvegarde locale.
+- Écriture au doigt / Apple Pencil via pointeur tactile, stylo, surligneur, gomme, couleurs, annuler, effacer, ajout d'image.
+- Outils visuels de masquage et règle déplaçable.
+- Mode stylet éphémère simplifié.
+- Import local de PDF, images, vidéos et autres fichiers ; aperçu PDF/image/vidéo quand pris en charge.
+- Quiz manuels classés par matière et flashcards manuelles.
+- Zone de texte avec spellcheck français dépendant du correcteur iPadOS/Safari.
+- Lexique spécialisé personnel classé par matière.
+- Chronomètre, minuteur, calculatrice simple, brouillon.
+- Liens vidéo YouTube intégrés quand autorisés, accès manuel à ChatGPT.
+- Stockage local dans le navigateur/app web, cache PWA hors connexion après premier chargement.
+
+LIMITES IMPORTANTES :
+Ce n'est pas encore un clone complet de GoodNotes. Le lasso n'est pas encore opérationnel (bouton indicatif), l'annotation PDF et PowerPoint directement dans les pages, le scanner intégré, la lecture simultanée de vidéo dans une vue fractionnée, le correcteur grammatical spécialisé et les quiz générés depuis un cours ne sont pas encore développés. Le correcteur utilise le correcteur du système, pas un moteur linguistique maison. L'import de nombreux gros fichiers peut remplir le stockage local. Fais régulièrement une sauvegarde/export (fonction d'export à ajouter) et ne supprime pas les données du navigateur.
+
+DÉPLOIEMENT :
+Le projet doit être hébergé en HTTPS pour l'installation PWA et le mode hors connexion. Les fichiers doivent être déposés à la racine du dépôt GitHub Pages. Les fichiers de cours ne sont pas envoyés à GitHub par le code de l'application ; ils restent dans le stockage local de l'application.
+
+Installation iPad : ouvrir l'adresse HTTPS dans Safari > Partager > Ajouter à l'écran d'accueil > activer Ouvrir comme app web si proposé > Ajouter.
