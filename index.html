@@ -62,63 +62,100 @@ main{padding:25px 28px;max-width:1500px;width:100%;margin:auto;min-width:0}.top{
 <div class="paperarea" id="paperarea"><div class="papertext" id="papertext" contenteditable="true" spellcheck="true" lang="fr"></div><canvas id="pad"></canvas><div class="mask" id="mask"></div><div class="ruler" id="ruler"></div></div><div class="sub" style="padding:7px">* Lasso : outil indicatif dans cette version. Le tracé Apple Pencil est pris en charge, mais la sélection/déplacement de portions de tracé reste à développer.</div></div>
 
 <script>
-const DB='rosalie-v2';let state=JSON.parse(localStorage.getItem(DB)||'{}');for(let k of ['notes','quizzes','cards','terms','files'])if(!state[k])state[k]=[];if(!state.scratch)state.scratch='';
-let current=null,pg=0,canvas,ctx,tool='pen',color='#642b43',down=false,last=null,history=[],ephemeralMode=false,sw=0,swInt=null,timerInt=null,timer=1500;
+const titleEl=document.getElementById("title"),
+      subtitleEl=document.getElementById("subtitle"),
+      noteListEl=document.getElementById("noteList"),
+      recentEl=document.getElementById("recent"),
+      editorEl=document.getElementById("editor"),
+      noteTitleEl=document.getElementById("noteTitle"),
+      pageNoEl=document.getElementById("pageNo"),
+      paperareaEl=document.getElementById("paperarea"),
+      papertextEl=document.getElementById("papertext"),
+      maskEl=document.getElementById("mask"),
+      rulerEl=document.getElementById("ruler"),
+      quizListEl=document.getElementById("quizList"),
+      qQuestionEl=document.getElementById("qQuestion"),
+      qAnswerEl=document.getElementById("qAnswer"),
+      qSubjectEl=document.getElementById("qSubject"),
+      quizRunEl=document.getElementById("quizRun"),
+      frontEl=document.getElementById("front"),
+      backEl=document.getElementById("back"),
+      cardSubjectEl=document.getElementById("cardSubject"),
+      deckEl=document.getElementById("deck"),
+      termSearchEl=document.getElementById("termSearch"),
+      termsEl=document.getElementById("terms"),
+      termEl=document.getElementById("term"),
+      subjectEl=document.getElementById("subject"),
+      fileInputEl=document.getElementById("fileInput"),
+      fileListEl=document.getElementById("fileList"),
+      filePreviewEl=document.getElementById("filePreview"),
+      videoURLEl=document.getElementById("videoURL"),
+      videoAreaEl=document.getElementById("videoArea"),
+      stopwatchButtonEl=document.getElementById("swb"),
+      minsEl=document.getElementById("mins"),
+      calcEl=document.getElementById("calc"),
+      calcResultEl=document.getElementById("calcResult"),
+      scratchEl=document.getElementById("scratch"),
+      scratchMsgEl=document.getElementById("scratchMsg");
+const stopwatchDisplayEl=document.getElementById("sw");
+
+const DB='rosalie-v2';let state=JSON.parse(localStorage.getItem(DB)||'{}');for(let k of ['notes','quizzes','cards','termsEl','files'])if(!state[k])state[k]=[];if(!state.scratch)state.scratch='';
+let current=null,pg=0,canvas,ctx,tool='pen',color='#642b43',down=false,last=null,history=[],ephemeralMode=false,stopwatchSeconds=0,swInt=null,timerInt=null,timer=1500;
 function persist(){localStorage.setItem(DB,JSON.stringify(state))}
 const titles={home:['Bonjour !','Ton espace de travail, organisé à ta façon.'],notes:['Mes cahiers','Tes pages et tes notes.'],docs:['Documents','Tes fichiers de cours importés.'],quiz:['Mes quiz','Questions organisées par matière.'],cards:['Flashcards','Révise activement.'],dict:['Correcteur & lexique','Français général et vocabulaire spécialisé.'],tools:['Boîte à outils','Tes outils pratiques.'],video:['Mes vidéos','Tes liens de cours.']};
-function page(id){document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===id));title.textContent=titles[id][0];subtitle.textContent=titles[id][1];render()}
+function page(id){document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===id));titleEl.textContent=titles[id][0];subtitleEl.textContent=titles[id][1];render()}
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>page(b.dataset.page));
 function render(){renderNotes();renderQuiz();renderCards();renderTerms();renderFiles()}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function renderNotes(){let h=state.notes.map(n=>`<div class="item"><div class="grow" onclick="openNote('${n.id}')"><strong>${esc(n.title)}</strong><small>${n.pages.length} page(s)</small></div><button class="btn soft" onclick="openNote('${n.id}')">Ouvrir</button><button class="btn line" onclick="renameNote('${n.id}')">Renommer</button><button class="btn line" onclick="removeNote('${n.id}')">Supprimer</button></div>`).join('')||'<div class="empty">Aucun cahier. Crée ton premier cahier.</div>';noteList.innerHTML=h;recent.innerHTML=state.notes.slice(0,3).map(n=>`<div class="item" onclick="openNote('${n.id}')"><div class="grow"><strong>${esc(n.title)}</strong><small>${n.pages.length} page(s)</small></div>›</div>`).join('')||'<div class="empty">Tes derniers cahiers apparaîtront ici.</div>'}
-function newNote(){let n={id:crypto.randomUUID(),title:'Nouveau cours',pages:[{text:'',draw:''}],updated:Date.now()};state.notes.unshift(n);persist();openNote(n.id)}
-function openNote(id){current=state.notes.find(n=>n.id===id);pg=0;editor.classList.add('open');noteTitle.value=current.title;loadPage()}
+function renderNotes(){let h=state.notes.map(n=>`<div class="item"><div class="grow" onclick="openNote('${n.id}')"><strong>${esc(n.title)}</strong><small>${n.pages.length} page(s)</small></div><button class="btn soft" onclick="openNote('${n.id}')">Ouvrir</button><button class="btn line" onclick="renameNote('${n.id}')">Renommer</button><button class="btn line" onclick="removeNote('${n.id}')">Supprimer</button></div>`).join('')||'<div class="empty">Aucun cahier. Crée ton premier cahier.</div>';noteListEl.innerHTML=h;recentEl.innerHTML=state.notes.slice(0,3).map(n=>`<div class="item" onclick="openNote('${n.id}')"><div class="grow"><strong>${esc(n.title)}</strong><small>${n.pages.length} page(s)</small></div>›</div>`).join('')||'<div class="empty">Tes derniers cahiers apparaîtront ici.</div>'}
+function newNote(){let n={id:crypto.randomUUID(),titleEl:'Nouveau cours',pages:[{text:'',draw:''}],updated:Date.now()};state.notes.unshift(n);persist();openNote(n.id)}
+function openNote(id){current=state.notes.find(n=>n.id===id);pg=0;editorEl.classList.add('open');noteTitleEl.value=current.title;loadPage()}
 function renameNote(id){let n=state.notes.find(x=>x.id===id),v=prompt('Nouveau titre',n.title);if(v){n.title=v;persist();renderNotes()}}
 function removeNote(id){if(confirm('Supprimer ce cahier et toutes ses pages ?')){state.notes=state.notes.filter(n=>n.id!==id);persist();renderNotes()}}
-function savePage(){if(!current)return;current.pages[pg].text=papertext.innerText;current.pages[pg].draw=canvas.toDataURL('image/png');current.title=noteTitle.value||'Sans titre';current.updated=Date.now();persist()}
+function savePage(){if(!current)return;current.pages[pg].text=papertextEl.innerText;current.pages[pg].draw=canvas.toDataURL('image/png');current.title=noteTitleEl.value||'Sans titre';current.updated=Date.now();persist()}
 function saveNote(){savePage();alert('Cahier enregistré sur cet appareil.')}
-function closeEditor(){savePage();editor.classList.remove('open');renderNotes()}
-function loadPage(){let p=current.pages[pg];papertext.innerText=p.text||'';initCanvas(p.draw);pageNo.textContent=`Page ${pg+1} / ${current.pages.length}`}
+function closeEditor(){savePage();editorEl.classList.remove('open');renderNotes()}
+function loadPage(){let p=current.pages[pg];papertextEl.innerText=p.text||'';initCanvas(p.draw);pageNoEl.textContent=`Page ${pg+1} / ${current.pages.length}`}
 function addPage(){savePage();current.pages.push({text:'',draw:''});pg=current.pages.length-1;loadPage()}
 function prevPage(){savePage();if(pg>0){pg--;loadPage()}}
 function nextPage(){savePage();if(pg<current.pages.length-1){pg++;loadPage()}}
 function deletePage(){if(current.pages.length===1)return alert('Un cahier doit conserver au moins une page.');if(confirm('Supprimer cette page ?')){current.pages.splice(pg,1);pg=Math.max(0,pg-1);loadPage();savePage()}}
-function initCanvas(data){canvas=document.getElementById('pad');ctx=canvas.getContext('2d');let r=paperarea.getBoundingClientRect(),w=r.width,h=r.height;canvas.width=w*devicePixelRatio;canvas.height=h*devicePixelRatio;canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.scale(devicePixelRatio,devicePixelRatio);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);if(data){let im=new Image();im.onload=()=>ctx.drawImage(im,0,0,w,h);im.src=data}history=[]}
+function initCanvas(data){canvas=document.getElementById('pad');ctx=canvas.getContext('2d');let r=paperareaEl.getBoundingClientRect(),w=r.width,h=r.height;canvas.width=w*devicePixelRatio;canvas.height=h*devicePixelRatio;canvas.style.width=w+'px';canvas.style.height=h+'px';ctx.scale(devicePixelRatio,devicePixelRatio);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);if(data){let im=new Image();im.onload=()=>ctx.drawImage(im,0,0,w,h);im.src=data}history=[]}
 function pos(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
 function pd(e){if(tool==='lasso')return;e.preventDefault();canvas.setPointerCapture(e.pointerId);history.push(canvas.toDataURL());down=true;last=pos(e);ctx.beginPath();ctx.moveTo(last.x,last.y)}
 function pm(e){if(!down)return;e.preventDefault();let p=pos(e);ctx.lineCap='round';ctx.lineJoin='round';ctx.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';ctx.strokeStyle=color;ctx.globalAlpha=tool==='marker'?.27:1;ctx.lineWidth=tool==='marker'?18:(e.pointerType==='pen'?2.5:3.5);ctx.lineTo(p.x,p.y);ctx.stroke();last=p}
 function pu(){if(!down)return;down=false;ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';if(ephemeralMode){setTimeout(()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ephemeralMode=false;savePage()},12000)}else savePage()}
 canvas=document.getElementById('pad');canvas.addEventListener('pointerdown',pd);canvas.addEventListener('pointermove',pm);canvas.addEventListener('pointerup',pu);canvas.addEventListener('pointercancel',pu);
-papertext.addEventListener('input',()=>{if(current){current.pages[pg].text=papertext.innerText;persist()}});
+papertextEl.addEventListener('input',()=>{if(current){current.pages[pg].text=papertextEl.innerText;persist()}});
 function setTool(t,b){tool=t;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===b))}
 function setColor(c){color=c;tool='pen';document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x.dataset.tool==='pen'))}
 function undo(){let d=history.pop();if(!d)return;let im=new Image();im.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(im,0,0,canvas.width/devicePixelRatio,canvas.height/devicePixelRatio);savePage()};im.src=d}
 function clearPage(){if(confirm('Effacer les tracés de cette page ?')){ctx.clearRect(0,0,canvas.width,canvas.height);savePage()}}
-function toggleMask(){mask.classList.toggle('on')}
-function toggleRuler(){ruler.classList.toggle('on');ruler.onpointerdown=e=>{let el=ruler,sy=e.clientY,top=el.offsetTop;el.setPointerCapture(e.pointerId);el.onpointermove=ev=>el.style.top=(top+ev.clientY-sy)+'px'}}
+function toggleMask(){maskEl.classList.toggle('on')}
+function toggleRuler(){rulerEl.classList.toggle('on');rulerEl.onpointerdown=e=>{let el=rulerEl,sy=e.clientY,top=el.offsetTop;el.setPointerCapture(e.pointerId);el.onpointermove=ev=>el.style.top=(top+ev.clientY-sy)+'px'}}
 function ephemeral(){ephemeralMode=true;alert('Le prochain tracé disparaîtra après 12 secondes.')}
 function insertImage(e){let f=e.target.files[0];if(!f)return;let im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{ctx.drawImage(im,20,20,Math.min(im.width,canvas.clientWidth*.7),Math.min(im.height,canvas.clientHeight*.7));URL.revokeObjectURL(u);savePage()};im.src=u;e.target.value=''}
-function addQuiz(){let q=qQuestion.value.trim(),a=qAnswer.value.trim();if(!q||!a)return alert('Complète la question et la réponse.');state.quizzes.push({s:qSubject.value.trim(),q,a});qQuestion.value='';qAnswer.value='';persist();renderQuiz()}
-function renderQuiz(){quizList.innerHTML=state.quizzes.map((x,i)=>`<div class="quizq"><small>${esc(x.s||'Sans matière')}</small><strong>${esc(x.q)}</strong><p>Réponse : ${esc(x.a)}</p><button class="btn line" onclick="delQuiz(${i})">Supprimer</button></div>`).join('')||'<div class="empty">Aucune question pour le moment.</div>'}
+function addQuiz(){let q=qQuestionEl.value.trim(),a=qAnswerEl.value.trim();if(!q||!a)return alert('Complète la question et la réponse.');state.quizzes.push({s:qSubjectEl.value.trim(),q,a});qQuestionEl.value='';qAnswerEl.value='';persist();renderQuiz()}
+function renderQuiz(){quizListEl.innerHTML=state.quizzes.map((x,i)=>`<div class="quizq"><small>${esc(x.s||'Sans matière')}</small><strong>${esc(x.q)}</strong><p>Réponse : ${esc(x.a)}</p><button class="btn line" onclick="delQuiz(${i})">Supprimer</button></div>`).join('')||'<div class="empty">Aucune question pour le moment.</div>'}
 function delQuiz(i){state.quizzes.splice(i,1);persist();renderQuiz()}
-function startQuiz(){let i=0,score=0,arr=state.quizzes.slice(),box=quizRun;if(!arr.length){box.innerHTML='<p>Ajoute des questions avant de commencer.</p>';return}function step(){if(i>=arr.length){box.innerHTML=`<div class="card"><h3>Terminé !</h3>${score}/${arr.length} bonnes réponses.</div>`;return}let x=arr[i];box.innerHTML=`<div class="card"><small>${esc(x.s||'')}</small><h3>${esc(x.q)}</h3><input id="ans" class="field" placeholder="Ta réponse"><button id="check" class="btn">Vérifier</button><p id="fb"></p></div>`;check.onclick=()=>{let ok=ans.value.trim().toLowerCase()===x.a.toLowerCase();if(ok)score++;fb.textContent=ok?'Bonne réponse !':'Réponse attendue : '+x.a;let b=document.createElement('button');b.className='btn soft';b.textContent='Suivant';b.onclick=()=>{i++;step()};box.querySelector('.card').append(b)}}step()}
-function addCard(){if(!front.value.trim()||!back.value.trim())return alert('Complète les deux côtés.');state.cards.push({f:front.value.trim(),b:back.value.trim(),s:cardSubject.value.trim()});front.value='';back.value='';persist();renderCards()}
-function renderCards(){deck.innerHTML=state.cards.map((c,i)=>`<div class="flash" onclick="this.classList.toggle('reveal')"><div class="front"><small>${esc(c.s||'FLASHCARD')}</small><h3>${esc(c.f)}</h3><small>Toucher pour retourner</small></div><div class="back"><h3>${esc(c.b)}</h3><small>Réponse</small></div><button class="btn line" onclick="event.stopPropagation();state.cards.splice(${i},1);persist();renderCards()">Supprimer</button></div>`).join('')||'<div class="empty">Aucune carte créée.</div>'}
-function addTerm(){let t=term.value.trim();if(!t)return;state.terms.push({t,s:subject.value});term.value='';persist();renderTerms()}
-function renderTerms(){let q=(termSearch?.value||'').toLowerCase();terms.innerHTML=state.terms.filter(x=>(x.t+x.s).toLowerCase().includes(q)).map((x,i)=>`<div class="item"><div class="grow"><strong>${esc(x.t)}</strong><small>${esc(x.s)}</small></div><button class="btn line" onclick="state.terms.splice(${i},1);persist();renderTerms()">Supprimer</button></div>`).join('')||'<div class="empty">Ajoute tes termes scientifiques pour construire ton lexique.</div>'}
-function importFiles(){let fs=[...fileInput.files];if(!fs.length)return;fs.forEach(f=>{let rd=new FileReader();rd.onload=()=>{state.files.push({name:f.name,type:f.type,data:rd.result});persist();renderFiles()};rd.readAsDataURL(f)});fileInput.value=''}
-function renderFiles(){fileList.innerHTML=state.files.map((f,i)=>`<div class="item"><div class="grow"><strong>${esc(f.name)}</strong><small>${esc(f.type||'Fichier')}</small></div><button class="btn soft" onclick="previewFile(${i})">Ouvrir</button><button class="btn line" onclick="state.files.splice(${i},1);persist();renderFiles();filePreview.style.display='none'">Supprimer</button></div>`).join('')||'<div class="empty">Aucun document importé.</div>'}
-function previewFile(i){let f=state.files[i];filePreview.style.display='block';if(f.type.startsWith('image/'))filePreview.innerHTML=`<h3>${esc(f.name)}</h3><img class="preview" src="${f.data}">`;else if(f.type==='application/pdf')filePreview.innerHTML=`<h3>${esc(f.name)}</h3><iframe class="video" style="height:65vh" src="${f.data}"></iframe>`;else if(f.type.startsWith('video/'))filePreview.innerHTML=`<h3>${esc(f.name)}</h3><video class="video" controls src="${f.data}"></video>`;else filePreview.innerHTML=`<h3>${esc(f.name)}</h3><p>Aperçu non disponible pour ce format. Le fichier est conservé dans Rosalie.</p>`}
-function playVideo(){let u=videoURL.value.trim();if(!u)return;try{let x=new URL(u),id='';if(x.hostname.includes('youtu.be'))id=x.pathname.slice(1);if(x.hostname.includes('youtube.com'))id=x.searchParams.get('v')||x.pathname.split('/').pop();if(id)videoArea.innerHTML=`<iframe class="video" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}" allowfullscreen></iframe>`;else videoArea.innerHTML=`<a target="_blank" rel="noopener" href="${esc(u)}">Ouvrir cette vidéo</a>`}catch{alert('URL non valide.')}}
+function startQuiz(){let i=0,score=0,arr=state.quizzes.slice(),box=quizRunEl;if(!arr.length){box.innerHTML='<p>Ajoute des questions avant de commencer.</p>';return}function step(){if(i>=arr.length){box.innerHTML=`<div class="card"><h3>Terminé !</h3>${score}/${arr.length} bonnes réponses.</div>`;return}let x=arr[i];box.innerHTML=`<div class="card"><small>${esc(x.s||'')}</small><h3>${esc(x.q)}</h3><input id="ans" class="field" placeholder="Ta réponse"><button id="check" class="btn">Vérifier</button><p id="fb"></p></div>`;check.onclick=()=>{let ok=ans.value.trim().toLowerCase()===x.a.toLowerCase();if(ok)score++;fb.textContent=ok?'Bonne réponse !':'Réponse attendue : '+x.a;let b=document.createElement('button');b.className='btn soft';b.textContent='Suivant';b.onclick=()=>{i++;step()};box.querySelector('.card').append(b)}}step()}
+function addCard(){if(!frontEl.value.trim()||!backEl.value.trim())return alert('Complète les deux côtés.');state.cards.push({f:frontEl.value.trim(),b:backEl.value.trim(),s:cardSubjectEl.value.trim()});frontEl.value='';backEl.value='';persist();renderCards()}
+function renderCards(){deckEl.innerHTML=state.cards.map((c,i)=>`<div class="flash" onclick="this.classList.toggle('reveal')"><div class="frontEl"><small>${esc(c.s||'FLASHCARD')}</small><h3>${esc(c.f)}</h3><small>Toucher pour retourner</small></div><div class="backEl"><h3>${esc(c.b)}</h3><small>Réponse</small></div><button class="btn line" onclick="event.stopPropagation();state.cards.splice(${i},1);persist();renderCards()">Supprimer</button></div>`).join('')||'<div class="empty">Aucune carte créée.</div>'}
+function addTerm(){let t=termEl.value.trim();if(!t)return;state.terms.push({t,s:subjectEl.value});termEl.value='';persist();renderTerms()}
+function renderTerms(){let q=(termSearchEl?.value||'').toLowerCase();termsEl.innerHTML=state.terms.filter(x=>(x.t+x.s).toLowerCase().includes(q)).map((x,i)=>`<div class="item"><div class="grow"><strong>${esc(x.t)}</strong><small>${esc(x.s)}</small></div><button class="btn line" onclick="state.terms.splice(${i},1);persist();renderTerms()">Supprimer</button></div>`).join('')||'<div class="empty">Ajoute tes termes scientifiques pour construire ton lexique.</div>'}
+function importFiles(){let fs=[...fileInputEl.files];if(!fs.length)return;fs.forEach(f=>{let rd=new FileReader();rd.onload=()=>{state.files.push({name:f.name,type:f.type,data:rd.result});persist();renderFiles()};rd.readAsDataURL(f)});fileInputEl.value=''}
+function renderFiles(){fileListEl.innerHTML=state.files.map((f,i)=>`<div class="item"><div class="grow"><strong>${esc(f.name)}</strong><small>${esc(f.type||'Fichier')}</small></div><button class="btn soft" onclick="previewFile(${i})">Ouvrir</button><button class="btn line" onclick="state.files.splice(${i},1);persist();renderFiles();filePreviewEl.style.display='none'">Supprimer</button></div>`).join('')||'<div class="empty">Aucun document importé.</div>'}
+function previewFile(i){let f=state.files[i];filePreviewEl.style.display='block';if(f.type.startsWith('image/'))filePreviewEl.innerHTML=`<h3>${esc(f.name)}</h3><img class="preview" src="${f.data}">`;else if(f.type==='application/pdf')filePreviewEl.innerHTML=`<h3>${esc(f.name)}</h3><iframe class="video" style="height:65vh" src="${f.data}"></iframe>`;else if(f.type.startsWith('video/'))filePreviewEl.innerHTML=`<h3>${esc(f.name)}</h3><video class="video" controls src="${f.data}"></video>`;else filePreviewEl.innerHTML=`<h3>${esc(f.name)}</h3><p>Aperçu non disponible pour ce format. Le fichier est conservé dans Rosalie.</p>`}
+function playVideo(){let u=videoURLEl.value.trim();if(!u)return;try{let x=new URL(u),id='';if(x.hostname.includes('youtu.be'))id=x.pathname.slice(1);if(x.hostname.includes('youtube.com'))id=x.searchParams.get('v')||x.pathname.split('/').pop();if(id)videoAreaEl.innerHTML=`<iframe class="video" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}" allowfullscreen></iframe>`;else videoAreaEl.innerHTML=`<a target="_blank" rel="noopener" href="${esc(u)}">Ouvrir cette vidéo</a>`}catch{alert('URL non valide.')}}
 function chatGPT(){window.open('https://chatgpt.com/','_blank','noopener')}
-function swToggle(){if(swInt){clearInterval(swInt);swInt=null;swb.textContent='Reprendre'}else{swInt=setInterval(()=>{sw++;sw.textContent=fmt(sw)},1000);swb.textContent='Pause'}}
-function swReset(){clearInterval(swInt);swInt=null;sw=0;document.getElementById('sw').textContent='00:00';swb.textContent='Démarrer'}
+function swToggle(){if(swInt){clearInterval(swInt);swInt=null;stopwatchButtonEl.textContent='Reprendre'}else{swInt=setInterval(()=>{stopwatchSeconds++;stopwatchDisplayEl.textContent=fmt(stopwatchSeconds)},1000);stopwatchButtonEl.textContent='Pause'}}
+function swReset(){clearInterval(swInt);swInt=null;stopwatchSeconds=0;stopwatchDisplayEl.textContent='00:00';stopwatchButtonEl.textContent='Démarrer'}
 function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function timerStart(){timerStop();timer=Math.max(1,Number(mins.value)||25)*60;timerInt=setInterval(()=>{timer--;document.getElementById('timer').textContent=fmt(timer);if(timer<=0){timerStop();alert('Temps écoulé !')}},1000)}
+function timerStart(){timerStop();timer=Math.max(1,Number(minsEl.value)||25)*60;timerInt=setInterval(()=>{timer--;document.getElementById('timer').textContent=fmt(timer);if(timer<=0){timerStop();alert('Temps écoulé !')}},1000)}
 function timerStop(){clearInterval(timerInt);timerInt=null}
-function calcRun(){let s=calc.value;if(!/^[0-9+\-*/().\s]+$/.test(s))return alert('Expression non valide.');try{calcResult.textContent='Résultat : '+Function('"use strict";return ('+s+')')()}catch{calcResult.textContent='Expression non valide.'}}
-function saveScratch(){state.scratch=scratch.value;persist();scratchMsg.textContent='Brouillon enregistré sur cet appareil.'}
-scratch.value=state.scratch;
+function calcRun(){let s=calcEl.value;if(!/^[0-9+\-*/().\s]+$/.test(s))return alert('Expression non valide.');try{calcResultEl.textContent='Résultat : '+Function('"use strict";return ('+s+')')()}catch{calcResultEl.textContent='Expression non valide.'}}
+function saveScratch(){state.scratch=scratchEl.value;persist();scratchMsgEl.textContent='Brouillon enregistré sur cet appareil.'}
+scratchEl.value=state.scratch;
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 render();
 </script></body></html>

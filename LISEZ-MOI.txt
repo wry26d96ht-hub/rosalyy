@@ -23,3 +23,7 @@ DÉPLOIEMENT :
 Le projet doit être hébergé en HTTPS pour l'installation PWA et le mode hors connexion. Les fichiers doivent être déposés à la racine du dépôt GitHub Pages. Les fichiers de cours ne sont pas envoyés à GitHub par le code de l'application ; ils restent dans le stockage local de l'application.
 
 Installation iPad : ouvrir l'adresse HTTPS dans Safari > Partager > Ajouter à l'écran d'accueil > activer Ouvrir comme app web si proposé > Ajouter.
+
+
+Version 0.3 : correction de la compatibilite Safari/iPad (references explicites aux elements HTML et chronometre).
+Pour mettre a jour GitHub, remplacer index.html par celui de cette archive, puis valider avec Commit changes.
